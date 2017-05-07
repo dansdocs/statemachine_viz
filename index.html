@@ -1,0 +1,160 @@
+<html>
+  <head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <title>State machine visualiser</title>
+  </head>
+<body>
+
+<style>
+  button { margin:4px; cursor:pointer; font-size: 70%; font-family; arial,sans-serif; margin-right: 5px }
+  textarea {
+      width:100%;
+  }
+</style>
+
+
+<h1>Create a statemachine diagram using webgraphviz. </h1>
+Replace the example C code, select what you wish to show and press the button. <br>
+The code example is explained more <a href="example.html">here.</a><br> 
+Remember to scroll down. It can take a while to create graph.
+
+<br><br>
+
+<button id="generate_btn" disabled style="font-size: 120%"><b>Loading.............</b>
+    <!-- The "update"  -->
+</button>
+&nbsp; &nbsp;
+<input id = "showJson" type="checkbox" name="showJson" />Show JSON &nbsp; &nbsp;
+<input id = "showDot" type="checkbox" name="showDot" />Show graphviz DOT &nbsp; &nbsp;
+<input id = "showGraph" type="checkbox" name="showGraph" checked />Show Graph 
+
+<br><br>
+
+<textarea id="c_data" rows="15" cols="80" width="100%" wrap="off">
+
+
+// simplifies creating the state table, current state doesn't need to be repeated as much. 
+
+
+#define ST(current_state, forward_state, branch_state, repeat_state) {\
+            {current_state, forward_state}, \
+            {current_state, branch_state},  \
+            {current_state, repeat_state},  \
+        }
+
+ 
+// works out the next state by looking up the state table.         
+
+
+#define NEXT_STATE(current_state, return_val) (\
+              return_val == rFORWARD ? txs_state_table[current_state][rFORWARD][tFUTURE_STATE] \
+            : return_val == rBRANCH ? txs_state_table[current_state][rBRANCH][tFUTURE_STATE] \
+            : txs_state_table[current_state][rREPEAT][tFUTURE_STATE]\
+        )    
+
+
+enum return_values {rFORWARD, rBRANCH, rREPEAT, rMAX_RETURN_VALUES};
+enum transition_index {tCURRENT_STATE, tFUTURE_STATE, tMAX_TRANSITION_INDEX};
+
+
+// The following defines are just encapsulating the function returns in a way that lets the
+// documentation be attached to it. They are only for the documentation ('in' doesn't go anywhere), 
+// directly returning rREPEAT, rFORWARD, rBRANCH will do the same thing functionally. 
+
+
+#define REPEAT_UNTIL(in) do{return rREPEAT;}while(0)
+#define FORWARD_WHEN(in) do{return rFORWARD;}while(0)
+#define BRANCH_IF(in) do{return rBRANCH;}while(0)
+
+
+// state function prototypes
+
+
+uint8_t ftx_start_beginDelayTimer (uint8_t previous_state);
+uint8_t ftx_colon_sendColon(uint8_t previous_state);
+uint8_t send_bin_as_ascii_char(uint16_t data, uint8_t bits);
+uint8_t ftx_slaveID_sendSlaveID(uint8_t previous_state);
+
+
+// Next two lines: enum and functions must be in sync! The enum is the index to look up the function
+// While there can be multiple state tables, there can only be one of the enum and functions array. 
+enum STATESENUM{mTX_START, mCOLON, mSLAVEID, mMAX_STATES, mNULL};
+uint8_t (*state_fns_array[mMAX_STATES])(uint8_t) = { ftx_start_beginDelayTimer, ftx_colon_sendColon, ftx_slaveID_sendSlaveID};
+
+// state table - there can be more than one state table using the functions defined in single enum and functions array. 
+uint8_t txs_state_table[mMAX_STATES][rMAX_RETURN_VALUES][tMAX_TRANSITION_INDEX] = {
+
+    ST(mTX_START, mCOLON, mNULL, mNULL),
+    ST(mCOLON, mSLAVEID, mNULL, mCOLON),
+    ST(mSLAVEID, mTX_START, mNULL, mSLAVEID),
+};
+
+	
+// ----------------------------
+		
+// execute the statemachine
+		
+uint16_t modbus_update() {
+
+    static uint8_t cur_state = mCOLON;
+    static uint8_t previous_state = mCOLON;
+    uint8_t rc;
+    uint8_t (* state_fun)(uint8_t);
+
+    if (UART_READY_TO_SEND()) {
+        state_fun = state_fns_array[cur_state];
+        rc = state_fun(previous_state);
+        previous_state = cur_state;
+        cur_state = NEXT_STATE(cur_state, rc);      
+    }
+  
+    return 0;
+}		
+
+// ------------------------------------
+// The state functions called via walking through the state table. 		
+		
+uint8_t ftx_start_beginDelayTimer (uint8_t previous_state){
+     // there is supposed to be a delay between a message being recieved and a message being sent. 
+     SET_MODBUS_TIMER(MODBUS_DELAY);
+     FORWARD_WHEN("Delay timer started");  
+}
+
+uint8_t ftx_colon_sendColon(uint8_t previous_state){ 
+  if (!MODBUS_TIMER_EXPIRED()) REPEAT_UNTIL("Delay timer has expired"); 
+  UART_SEND_BYTE(':');
+  FORWARD_WHEN("Delay timer expired and ':' sent");  
+}
+
+
+uint8_t send_bin_as_ascii_char(uint16_t data, uint8_t bits){
+    // this is a dummy function. 
+    return 0;  
+}
+
+
+uint8_t ftx_slaveID_sendSlaveID(uint8_t previous_state){
+    if (send_bin_as_ascii_char((uint16_t)slaveID, 8)) FORWARD_WHEN("All SalveID nibbles sent");
+    REPEAT_UNTIL("All SlaveID nibbles sent");          
+     
+}		
+
+</textarea>
+<p>
+
+
+
+<div id="graphviz_generated_div" class="gvoutput">
+  <!-- Target for dynamic data generation and diagram-->
+</div>
+
+</body>
+
+<!-- Defer loading of javascript by placing these tags at the tail end of the document -->
+<script language="javascript" type="text/javascript" src="./jquery.min.js"> </script>
+<script language="javascript" type="text/javascript" src="./viz.js"></script>
+<script language="javascript" type="text/javascript" src="./site.js"> </script>
+<script language="javascript" type="text/javascript" src="./string.js"> </script>
+
+
+</html>
