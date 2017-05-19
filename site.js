@@ -276,20 +276,12 @@ function ConvertArrayString(s) {
 			id = enums[key];
 			fn = S(fns[id].split('_').pop()).humanize().s;
 			drwObj[key]["label"] = key + ' \\n ' + fn;
-			if (key.indexOf('START') == -1) drwObj[key]["shape"] = 'circle';
-			else drwObj[key]["shape"] = 'doublecircle';
+			
+			if (key.indexOf('START') >= 0) drwObj[key]["shape"] = 'doublecircle';			
+			else if (key.indexOf('FINISH') >= 0) drwObj[key]["shape"] = 'octagon';
+			else drwObj[key]["shape"] = 'circle';			
 		}		
 		
-		// Put in nextState object, label and shape for each state. 
-		for (key in drwObj) {
-			if (!(drwObj.hasOwnProperty(key))) continue; 
-			drwObj[key]["nextState"] = {};
-			id = enums[key];
-			fn = S(fns[id].split('_').pop()).humanize().s;
-			drwObj[key]["label"] = key + ' \\n ' + fn;
-			if (key.indexOf('START') == -1) drwObj[key]["shape"] = 'circle';
-			else drwObj[key]["shape"] = 'doublecircle';
-		}
 		
 		// complete the forward, repeat and branch for each state.  
 		for (key in drwObj) {
@@ -329,17 +321,23 @@ function ConvertArrayString(s) {
 		var stateLabel;
 		var circle = "";
 		var doubleCircle = "";
+		var octagon = "";
 		var dotString = "";
 		
-		// Any state with start in its name will be a double circle shape. Everything else is a plain circle. 
+		// Any state with start in its name will be a double circle shape. 
+		// Any state with finish in its name will be an octogon. 
+		// Everything else is a plain circle. 
 		for (obKey in dwgObj){
-			if (obKey.indexOf("START") ==  -1 ) circle = circle + " " + obKey;
-			else doubleCircle = doubleCircle + " " + obKey;
+			if (obKey.indexOf("START") >=  0 ) doubleCircle = doubleCircle + " " + obKey;
+			else if (obKey.indexOf("FINISH") >=  0 ) octagon = octagon + " " + obKey;
+			else circle = circle + " " + obKey;
 		}
+		
 		dotString = 'digraph finite_state_machine {\n    rankdir=LR;\n    size="8,5";\n'		
 		dotString = dotString + "    node [shape = doublecircle];" + doubleCircle + "; \n";
-		dotString = dotString + "    node [shape = circle];" + circle + "; \n\n";
-
+		dotString = dotString + "    node [shape = circle];" + circle + "; \n";
+		dotString = dotString + "    node [shape = octagon];" + octagon + "; \n\n";
+		
 		// Set the label inside of each state circle (or double circle).
 		for (obKey in dwgObj){
 			stateLabel = dwgObj[obKey]["label"];
