@@ -24,7 +24,9 @@ jQuery(document).ready(function () {
 
   var generate_btn = jQuery('#generate_btn');
   var graphviz_div = jQuery('#graphviz_generated_div');
+  var error_div = jQuery('#graphviz_error_div');
   var c_data_textarea = jQuery('#c_data');
+
 
   var showJson_checkbox = jQuery('#showJson');
   var showDot_checkbox = jQuery('#showDot');
@@ -102,10 +104,12 @@ function ConvertArrayString(s) {
     var enumElements = [];
     var enumOb = {};
     var i = 0;
+	var errormsg = "";
      
     if (cdata.count(ENUM_IDENTIFIER) != 1){
-        console.log('Error: Expected exactly one STATESENUM Enum array but there are multiple or none');
-        return "";
+		errormsg = 'Error: Expected exactly one STATESENUM Enum but there are multiple or none';
+        console.log(errormsg);
+        return errormsg;
     }	
     
     cdata = cdata.between(ENUM_IDENTIFIER, '}'); 
@@ -133,10 +137,12 @@ function ConvertArrayString(s) {
     var fnElements = [];
     var fnOb = {};
     var i = 0;
+    var errormsg = "";
      
     if (cdata.count(FN_IDENTIFIER) != 1){
-        console.log('Error: Expected exactly one state_fns_array but there are multiple or none');
-        return "";
+        errormsg = 'Error: Expected exactly one state_fns_array but there are multiple or none';
+		console.log(errormsg);
+        return errormsg;
     }	
     
     arrString = cdata.between(FN_IDENTIFIER, '}').s; 
@@ -334,9 +340,9 @@ function ConvertArrayString(s) {
 		}
 		
 		dotString = 'digraph finite_state_machine {\n    rankdir=LR;\n    size="8,5";\n'		
-		dotString = dotString + "    node [shape = doublecircle];" + doubleCircle + "; \n";
+		if (doubleCircle != "") dotString = dotString + "    node [shape = doublecircle];" + doubleCircle + "; \n";
 		dotString = dotString + "    node [shape = circle];" + circle + "; \n";
-		dotString = dotString + "    node [shape = octagon];" + octagon + "; \n\n";
+		if (octagon != "") dotString = dotString + "    node [shape = octagon];" + octagon + "; \n\n";
 		
 		// Set the label inside of each state circle (or double circle).
 		for (obKey in dwgObj){
@@ -366,6 +372,7 @@ function ConvertArrayString(s) {
 	  
     function UpdateGraphviz() {
 		graphviz_div.html("");
+		error_div.html("");
 		var fnsOb;
 		var msg;
 		var enums;
@@ -377,9 +384,21 @@ function ConvertArrayString(s) {
 		var svg;
     
 		// look through the c code and get the bits we are interested in
-		stateTable = FindStateTables(c_data_textarea.val());
 		enums = FindEnum(c_data_textarea.val());
 		fnsOb = FindFns(c_data_textarea.val());
+		
+		// display errors if any
+		if ((typeof(enums) == "string") || (typeof(fnsOb) == "string")){
+			if (typeof(enums) == "string"){
+				error_div.append(enums + " <br> " );
+				enums = "";
+			}			
+			if (typeof(fnsOb) == "string"){
+				error_div.append(fnsOb);
+				fnsOb = "";
+			}			
+		} 
+		stateTable = FindStateTables(c_data_textarea.val());
 		msg = FindMsgs(fnsOb, c_data_textarea.val());
     
 		// work through each state table and generate a diagramatic representation
@@ -422,11 +441,6 @@ function ConvertArrayString(s) {
 			}
 			
 		}
-
-
-		// Generate the Visualization of the Graph into "svg".
-		// var svg = Viz(data, "svg");
-		// svg_div.html("<hr>"+svg);
 	}
 
   // Startup function: call UpdateGraphviz
