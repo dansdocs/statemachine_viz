@@ -1,459 +1,253 @@
-// Delay loading any function until the html dom has loaded. All functions are
-// defined in this top level function to ensure private scope.
-jQuery(document).ready(function () {
 
-  // Installs error handling.
-  jQuery.ajaxSetup({
-  error: function(resp, e) {
-    if (resp.status == 0){
-      alert('You are offline!!\n Please Check Your Network.');
-      } else if (resp.status == 404){
-        alert('Requested URL not found.');
-      } else if (resp.status == 500){
-        alert('Internel Server Error:\n\t' + resp.responseText);
-      } else if (e == 'parsererror') {
-        alert('Error.\nParsing JSON Request failed.');
-      } else if (e == 'timeout') {
-        alert('Request timeout.');
-      } else {
-        alert('Unknown Error.\n' + resp.responseText);
-      }
-    }
-  });  // error:function()
+var process_btn = document.getElementById("process_btn");
+var accept_btn = document.getElementById("accept_btn");
+var line_checkbox = document.getElementById("line_checkbox");
+var word_checkbox = document.getElementById("word_checkbox");
+var char_checkbox = document.getElementById("char_checkbox");
+var svg_checkbox  = document.getElementById("svg_checkbox");
+var dot_checkbox  = document.getElementById("dot_checkbox");
+var json_checkbox = document.getElementById("json_checkbox");
 
+var line_window = undefined;
+var word_window = undefined;
+var char_window = undefined;
+var svg_window  = undefined;
+var dot_window  = undefined;
+var json_window = undefined;
 
-  var generate_btn = jQuery('#generate_btn');
-  var graphviz_div = jQuery('#graphviz_generated_div');
-  var error_div = jQuery('#graphviz_error_div');
-  var c_data_textarea = jQuery('#c_data');
-
-
-  var showJson_checkbox = jQuery('#showJson');
-  var showDot_checkbox = jQuery('#showDot');
-  var showGraph_checkbox = jQuery('#showGraph');
-
-function Reverse(s) {
-  return (s === '') ? '' : Reverse(s.substr(1)) + s.charAt(0);
-}
-
-function ConvertArrayString(s) {
-	var row = "";
-    var rowElements = [];
-	var remainder = "";
-	var states = {};
-
-	remainder = S(s);
-	remainder = remainder.strip(',');
-	remainder = remainder.collapseWhitespace();
-    row = remainder.between('(', ')').s;
-    
-    while (row.length > 0) {
-   	    row = row.trim();
-		rowElements = row.split(" ");
-		states[rowElements[0]] = {};
-		states[rowElements[0]]['forward'] = rowElements[1];
-		states[rowElements[0]]['branch']  = rowElements[2];
-		states[rowElements[0]]['repeat']  = rowElements[3];
-		remainder = remainder.strip('(' + row + ')');
-		row = remainder.between('(', ')').s;
-	}
-    return states;
-}
-
-  function FindStateTables(c_data_textarea_val) {
-	  
-    var STATE_TABLE_IDENTIFIER = 'state_table';
-    var STATE_TABLE_ARRAY_IDENTIFIER = STATE_TABLE_IDENTIFIER+'[mMAX_STATES]';
-    var state_table_unique_array_identifier = "";
-    
-    var cdata = S(c_data_textarea_val);    
-    var max_count = cdata.count(STATE_TABLE_ARRAY_IDENTIFIER);
-    var arrString = "";
-    var count = 0;
-    var name = "";
-    var name_prefix = "";
-    var index;
-    var i = 0;
-    var stateTables = {};
-        
-    console.log('number of state tables: ' + max_count);
-      
-    while (count < max_count) {
-        arrString = cdata.between(STATE_TABLE_ARRAY_IDENTIFIER, '}').s;
-        index = cdata.indexOf(STATE_TABLE_ARRAY_IDENTIFIER) - 1;
-        i = 0; name = ""; name_prefix = "";
-        while ((cdata.charAt(index - i) != " ") && (index >= 0) ) {
-			name_prefix = name_prefix + cdata.charAt(index - i);
-			i++;
-		} 
-		name_prefix= Reverse(name_prefix);
-        state_table_unique_array_identifier = name_prefix + STATE_TABLE_ARRAY_IDENTIFIER;
-        cdata = cdata.strip(state_table_unique_array_identifier + arrString + '}');
-        name = name_prefix + STATE_TABLE_IDENTIFIER;   
-        stateTables[name] = ConvertArrayString(arrString);;
-		count++;
-    }
-    return stateTables;     
-  }
+Logger.useDefaults();    
   
- function FindEnum(c_data_textarea_val) {
+var editor = ace.edit("editor");
+editor.setTheme("ace/theme/twilight");
+editor.session.setMode("ace/mode/c_cpp");
+editor.on("change", adjust_width_of_dom_padding_strip);
+editor.$blockScrolling = Infinity;
+adjust_width_of_dom_padding_strip(null);
+editor.focus()
+        
+// This is just for very minor asthetics/vanity. Adjust the grey padding strip above the editor
+// to match as the number of digits increases. Copying the div width value from the 
+// editor dom is one event behind - hence the if/else lookup style approach.  
+function adjust_width_of_dom_padding_strip(e){
+    var w;
+    w="73px";
+    if (editor.session.getLength() < 10) w = "40px";
+    else if (editor.session.getLength() > 9 && editor.session.getLength() < 100) w = "47px";
+    else if (editor.session.getLength() > 99 && editor.session.getLength() < 1000) w = "53px";
+    else if (editor.session.getLength() > 999 && editor.session.getLength() < 10000) w = "60px";
+    else if (editor.session.getLength() > 9999 && editor.session.getLength() < 100000) w = "66px";
+    else if (editor.session.getLength() > 99999 && editor.session.getLength() < 1000000) w = "73px";
+    document.getElementsByClassName("flex-col")[0].style.width = w;
+}        
+  
+
+  // create a diff and return as a DOM fragment. 
+  // depends on jsdiff.js
+  // diffType is a string and can be: "diffChars", "diffWords" or "diffLines"
+  // existing and updated are strings and are the two pieces of text to diff. 
+  function do_diff(existing, updated, diffType){
+	  var diff;
+	  var fragment;
 	  
-    var ENUM_IDENTIFIER = 'STATESENUM';    
-    var cdata = S(c_data_textarea_val); 
-    var arrString;
-    var enumElements = [];
-    var enumOb = {};
-    var i = 0;
-	var errormsg = "";
-     
-    if (cdata.count(ENUM_IDENTIFIER) != 1){
-		errormsg = 'Error: Expected exactly one STATESENUM Enum but there are multiple or none';
-        console.log(errormsg);
-        return errormsg;
-    }	
-    
-    cdata = cdata.between(ENUM_IDENTIFIER, '}'); 
-    cdata = cdata.strip('{');
-    cdata = cdata.strip(',');
-    cdata = cdata.strip('mNULL');
-    cdata = cdata.strip('mMAX_STATES');
-	cdata = cdata.collapseWhitespace();
-	arrString = cdata.trim().s;
-	enumElements = arrString.split(" ");
-	
-	for (i = 0; i < enumElements.length; i++){
-		enumOb[enumElements[i]] = i;
-		enumOb[i] = enumElements[i];
-    }
-	
-    return (enumOb);   
- } 
- 
- function FindFns(c_data_textarea_val) {
-	  
-    var FN_IDENTIFIER = 'state_fns_array[mMAX_STATES]';    
-    var cdata = S(c_data_textarea_val); 
-    var arrString;
-    var fnElements = [];
-    var fnOb = {};
-    var i = 0;
-    var errormsg = "";
-     
-    if (cdata.count(FN_IDENTIFIER) != 1){
-        errormsg = 'Error: Expected exactly one state_fns_array but there are multiple or none';
-		console.log(errormsg);
-        return errormsg;
-    }	
-    
-    arrString = cdata.between(FN_IDENTIFIER, '}').s; 
-    arrString = arrString.substring(arrString.indexOf('{'));
-    cdata = S(arrString);
-    cdata = cdata.strip('{');
-    cdata = cdata.strip(',');
-	cdata = cdata.collapseWhitespace();
-	arrString = cdata.trim().s;
-	fnElements = arrString.split(" ");
-	
-	for (i = 0; i < fnElements.length; i++){
-		fnOb[i] = fnElements[i];
-		fnOb[fnElements[i]] = i;
-    }
-	
-    return (fnOb);   
- }  
- 
- function GetIndexOfMatchingBracket(s, i){
-    // find first bracket
-    if (i == 0) {
-        while (i < s.length) {
-			if (s.charAt(i) == '{') {
-			    i++;
-			    break;
-			}
-			else if (s.charAt(i) == ';') {
-				return i*(-1);
-			}
-			i++;
+        diff = JsDiff[diffType](existing, updated);
+        var fragment = document.createDocumentFragment();
+	    for (var i=0; i < diff.length; i++) {
+
+		    if (diff[i].added && diff[i + 1] && diff[i + 1].removed) {
+			    var swap = diff[i];
+			    diff[i] = diff[i + 1];
+			    diff[i + 1] = swap;
+		    }
+
+		    var node;
+		    if (diff[i].removed) {
+		        node = document.createElement('del');
+			    node.appendChild(document.createTextNode(diff[i].value));
+		    } else if (diff[i].added) {
+			    node = document.createElement('ins');
+			    node.appendChild(document.createTextNode(diff[i].value));
+		    } else {
+			    node = document.createTextNode(diff[i].value);
+		    }
+		    fragment.appendChild(node);
 	    }
-	    if (i >= s.length) return -1;  // didn't find anything.  
-	} 
-    while (i < s.length) {
-        if (s.charAt(i) == '{') {
-            i = GetIndexOfMatchingBracket(s, i+1);
-		}
-        else if (s.charAt(i) == '}') {
-            return i+1;
-        }
-        else {
-            // process whatever is at s.charAt(i)
-            i++;
-        }
-	}
-    return i; 
- }
- 
- function FindMsgs(fns, c_data_textarea_val) {
-     var FN_IDENTIFIER = 'state_fns_array[mMAX_STATES]';	
-     var cdata = S(c_data_textarea_val); 
-     var key;
-     var count = 0;
-     var remainder;
-     var msgs = {};
-     var fnName;
-     var bracketIndex;
-     var firstTime = true;
-     
-     // after the next two lines gets rid of the state_fns_array pointer array. 
-     arrString = cdata.between(FN_IDENTIFIER, '}').s; 
-     cdata = cdata.strip(arrString).s;
-     
-     while (fns.hasOwnProperty(count)) {
-		 fnName = fns[count];
-		 
-		 // The firstTime flag will be false if we have looped around without increasing count because the previous loop found 
-		 // a fn prototype if thats the case we don't want to go back to the source text, but use the text with the fn prototype deleted.  
-		 if (firstTime) {
-			 if (cdata.indexOf(fnName) == -1){
-				 console.log("ERROR: can't find " + fnName);
-				 return -1;
-			 }
-             remainder = cdata.substring( cdata.indexOf(fnName));
-		 }
-		 else {
-			 firstTime = true;
-			 if (remainder.indexOf(fnName) == -1){
-				 console.log("ERROR: can't find " + fnName);
-				 return -1;
-			 }
-			 remainder = remainder.substring(remainder.indexOf(fnName));
-		 }
-		 
-		 bracketIndex = GetIndexOfMatchingBracket(remainder, 0);
-		 if (bracketIndex < 0){
-			 if (bracketIndex == -1) {
-				 console.log("ERROR: Syntax error when searching for function bracket");
-				 return -1;
-			 }
-			 else {
-			     // looks like we found a function prototype, remove it look again for the actual function. 
-			     console.log("found fn prototype and removing it");	 
-				 remainder = remainder.substring(bracketIndex*(-1));
-				 firstTime = false;
-			 }
-		 }
-		 // skip the next bit if it was a function prototype and loop around again. 
-		 if (firstTime) {
-			remainder = remainder.substring(0, bracketIndex);
-		    msgs[fnName] = {};
-		    if (remainder.indexOf('REPEAT_UNTIL') >= 0) {
-	    		 msgs[fnName]['repeat'] = S(remainder).between('REPEAT_UNTIL', ')').strip('(').strip('"').trim().s;
-		    }
-		    if (remainder.indexOf('FORWARD_WHEN') >= 0) {
-                 msgs[fnName]['forward'] = S(remainder).between('FORWARD_WHEN', ')').strip('(').strip('"').trim().s;
-		    }
-		    if (remainder.indexOf('BRANCH_IF') >= 0) {
-                msgs[fnName]['branch'] = S(remainder).between('BRANCH_IF', ')').strip('(').strip('"').trim().s;		 
-		    }		 
-		    count++;
-		 }
-	 }
-     return msgs;
-   }
-     
-	function AssembleDrawingDataStructure(stateTable, enums, fns, msgs){
-		
-		var drwObj = {};
-		var key;
-		var key2;
-		var id;
-		var fn;
-		
-			
-		// Put in each of the states. 
-		for (key in stateTable) {
-			if (!(stateTable.hasOwnProperty(key))) continue; 
-			drwObj[key] = {};
-		}
-		
-		// Put in nextState object, label and shape for each state. 
-		for (key in drwObj) {
-			if (!(drwObj.hasOwnProperty(key))) continue; 
-			drwObj[key]["nextState"] = {};
-			id = enums[key];
-			fn = S(fns[id].split('_').pop()).humanize().s;
-			drwObj[key]["label"] = key + ' \\n ' + fn;
-			
-			if (key.indexOf('START') >= 0) drwObj[key]["shape"] = 'doublecircle';			
-			else if (key.indexOf('FINISH') >= 0) drwObj[key]["shape"] = 'octagon';
-			else drwObj[key]["shape"] = 'circle';			
-		}		
-		
-		
-		// complete the forward, repeat and branch for each state.  
-		for (key in drwObj) {
-			if (!(drwObj.hasOwnProperty(key))) continue; 
-			
-			if (stateTable[key]["forward"] !== "mNULL") {
-			    drwObj[key]["nextState"]["forward"] = {
-			    	"fwdState" : stateTable[key]["forward"],
-                    "fwdMsg"   : msgs[fns[enums[key]]]["forward"]
-			    };
-			}
-			
-			if (stateTable[key]["repeat"] !== "mNULL") {
-			    drwObj[key]["nextState"]["repeat"] = {
-					"rptState" : stateTable[key]["repeat"],
-					"rptMsg"   : msgs[fns[enums[key]]]["repeat"]
-				};
-			}	
-			
-			if (stateTable[key]["branch"] !== "mNULL") {
-			    drwObj[key]["nextState"]["branch"] = {
-					"branchState" : stateTable[key]["branch"],
-					"branchMsg"   : msgs[fns[enums[key]]]["branch"]
-				};	
-			}    					
-		}						
+	    return fragment;
+  }
 
-		return(drwObj);
-		
-		 		
+
+// convert a DOM fragment to a html string. 
+// for some reason in microsoft edge can't attach a child fragment to a popup
+// so convert the fragment to a string, merge it into a page and write the whole page. 
+function toHTMLstring(node, recursive) {
+  node = node || this;
+  
+  if (!recursive){
+      toHTMLstring.hs = "";
+      toHTMLstring.closetag = "";
+  }
+
+  if (node.tagName) {
+    toHTMLstring.hs += '<' + node.tagName + '>';
+    toHTMLstring.closetag = '</' + node.tagName + '>';
+  } 
+  
+  if (node.nodeValue) {
+    toHTMLstring.hs += node.nodeValue;
+    toHTMLstring.hs += toHTMLstring.closetag;
+  }
+
+  var childNodes = node.childNodes;
+  if (childNodes) {
+    var length = childNodes.length;
+    for (var i = 0; i < length; i++) {
+      toHTMLstring(childNodes[i], true);
+    }
+  }
+
+  return toHTMLstring.hs;
+}
+
+function acceptAndUpdateEditorContents(incoming){
+	// this function is called by the accept button onclick event
+	// and it is also called during the work done when the process button 
+	// has been pressed. For this process button case, we are just storing the
+	// data ready for if/when the user presses the accept button.  
+	// mimic a static variable and use it to store string data ready for 
+	// when the accept button is pressed - and when pressed replace the editor contents
+	// with the new string data.  
+    	
+    if ( typeof incoming == 'string' ) {
+      acceptAndUpdateEditorContents.newCode = incoming;
+    }
+    
+    else {
+		if (typeof acceptAndUpdateEditorContents.newCode == 'string'){
+		    editor.setValue(acceptAndUpdateEditorContents.newCode, 1);
+	    }
+	}
+}
+
+function newOrUpdateWindow(win, title, fragment){
+	
+	if (typeof newOrUpdateWindow.yoffset == 'undefined') newOrUpdateWindow.yoffset = 0;
+	
+    var htmlString = Template.dPage.html.replace("^^title^^", title);
+    htmlString = htmlString.replace("^^heading^^", title);
+    	
+	if ((win == undefined) || (win.closed) || (win == null) ) {
+        win = window.open(url="", title, 'menubar=no, titlebar=no, resizable=yes, width=250, height=200, scrollbars=yes, status=no');
+		// lay the windows out down the page. 
+		win.moveTo(0, newOrUpdateWindow.yoffset);
+        newOrUpdateWindow.yoffset += 30;
+        if (newOrUpdateWindow.yoffset > 300) newOrUpdateWindow.yoffset = 0;
 	}
 	
-	function CreateDotString(dwgObj){
-		var obKey;
-		var nextKey
-		var nextState;
-		var stateLabel;
-		var circle = "";
-		var doubleCircle = "";
-		var octagon = "";
-		var dotString = "";
-		
-		// Any state with start in its name will be a double circle shape. 
-		// Any state with finish in its name will be an octogon. 
-		// Everything else is a plain circle. 
-		for (obKey in dwgObj){
-			if (obKey.indexOf("START") >=  0 ) doubleCircle = doubleCircle + " " + obKey;
-			else if (obKey.indexOf("FINISH") >=  0 ) octagon = octagon + " " + obKey;
-			else circle = circle + " " + obKey;
-		}
-		
-		dotString = 'digraph finite_state_machine {\n    rankdir=LR;\n    size="8,5";\n'		
-		if (doubleCircle != "") dotString = dotString + "    node [shape = doublecircle];" + doubleCircle + "; \n";
-		dotString = dotString + "    node [shape = circle];" + circle + "; \n";
-		if (octagon != "") dotString = dotString + "    node [shape = octagon];" + octagon + "; \n\n";
-		
-		// Set the label inside of each state circle (or double circle).
-		for (obKey in dwgObj){
-			stateLabel = dwgObj[obKey]["label"];
-			dotString = dotString + "        " + obKey + ' [label = "' + stateLabel + '"];\n';
-		}
-		
-		dotString = dotString + "\n";
-			
-		// Complete the state transitions and label the transitions. 		
-		for (obKey in dwgObj){
-			nextState = dwgObj[obKey]["nextState"];
-			if (nextState.hasOwnProperty("forward")) {
-				dotString = dotString + "        " + obKey + " -> " + nextState["forward"]["fwdState"] + ' [label = "Forward when \\n ' + nextState["forward"]["fwdMsg"] + '"];\n';
-			} 
-			if (nextState.hasOwnProperty("repeat")) {
-				dotString = dotString + "        " + obKey + " -> " + nextState["repeat"]["rptState"] + ' [label = "Repeat until \\n ' + nextState["repeat"]["rptMsg"] + '"];\n';
-			} 			
-			if (nextState.hasOwnProperty("branch")) {
-				dotString = dotString + "        " + obKey + " -> " + nextState["branch"]["branchState"] + ' [label = "Branch if \\n ' + nextState["branch"]["branchMsg"] + '"];\n';
-			} 						
-		}
-		dotString = dotString + " }\n";
-		
-		return dotString;
+    if ((win == null) && (newOrUpdateWindow.alert == undefined)) {
+		alert("Looks like popups are blocked. Enable popups for this URL - or press the Process button once for each checked checkbox.");
+		newOrUpdateWindow.alert = true;
 	}
-	  
-    function UpdateGraphviz() {
-		graphviz_div.html("");
-		error_div.html("");
-		var fnsOb;
-		var msg;
-		var enums;
-		var stateTable;
-		var dwgObj;
-		var content;
-		var key;
-		var dotString;
-		var svg;
+	
+	if (typeof fragment !== "string") win.document.write(htmlString.replace('^^outputdiv^^', toHTMLstring(fragment, false)));
+	else win.document.write(htmlString.replace('^^outputdiv^^', fragment));
+    win.document.close();
+    return win;
+}
+
+function processEditorContents(){
+    var smObjArr;
+    var fragment;
+    var origCode = "";
+    var newCode = "";
+    var dotArray = [];
     
-		// look through the c code and get the bits we are interested in
-		enums = FindEnum(c_data_textarea.val());
-		fnsOb = FindFns(c_data_textarea.val());
-		
-		// display errors if any
-		if ((typeof(enums) == "string") || (typeof(fnsOb) == "string")){
-			if (typeof(enums) == "string"){
-				error_div.append(enums + " <br> " );
-				enums = "";
-			}			
-			if (typeof(fnsOb) == "string"){
-				error_div.append(fnsOb);
-				fnsOb = "";
-			}			
-		} 
-		stateTable = FindStateTables(c_data_textarea.val());
-		msg = FindMsgs(fnsOb, c_data_textarea.val());
+    smObjArr = Codeupdater.analyzeAndUpdateCode(editor.getValue());
+    Logger.info(smObjArr);
     
-		// work through each state table and generate a diagramatic representation
-		for (key in stateTable) {
-			if (!(stateTable.hasOwnProperty(key))) continue; // skip if its a built in property
-			
-			// assemble the bits we are interested in into a single object
-			dwgObj = AssembleDrawingDataStructure(stateTable[key], enums, fnsOb, msg);
-			console.log(stateTable);
-			console.log("Complete State entry for " + key);
-			console.log(dwgObj);
-		
-			// use the extracted data from the c file to create the dot string for graphviz
-			dotString = CreateDotString(dwgObj);      
-			  
-			content = jQuery('<div id="' + key + '_title"><h2> StateTable: ' + key + ' </h2></div>');  			  
-			graphviz_div.append(content);
-			
-			if (showJson_checkbox.prop('checked')) {
-			    content = '<div id="' + key + '_json"><pre> ';
-			    content = content + JSON.stringify(dwgObj, null, 4);
-			    content = content + '</pre></div>';
-			    content = jQuery(content);
-			    graphviz_div.append(content);
-			}
-			
-			if (showDot_checkbox.prop('checked')) {
-			    content = '<div id="' + key + '_dot"><pre> ';
-			    content = content + dotString;
-			    content = content + '</pre></div>';
-			    content = jQuery(content);
-			    graphviz_div.append(content);
-			}
-			
-			if (showGraph_checkbox.prop('checked')) {
-				svg = Viz(dotString, "svg");
-			    content = '<div id="' + key + '_graph"><pre> ' + svg + '</pre></div>';
-			    content = jQuery(content);
-			    graphviz_div.append(content);
-			}
-			
-		}
+    // make the new code available in the function handling the accept button click. 
+    acceptAndUpdateEditorContents(smObjArr[0].newCode);
+
+    origCode = S(smObjArr[0].origCode).replaceAll('\r', "").s;
+    newCode = S(smObjArr[0].newCode).replaceAll('\r', "").s;
+    if (line_checkbox.checked) line_window = newOrUpdateWindow(line_window, 'Line Diff', do_diff(origCode, newCode, "diffLines"));
+    else if (line_window != undefined) line_window.close();
+    if (word_checkbox.checked) word_window = newOrUpdateWindow(word_window, 'Word Diff', do_diff(origCode, newCode, "diffWords"));
+    else if (word_window != undefined) word_window.close();
+    if (char_checkbox.checked) char_window = newOrUpdateWindow(char_window, 'Char Diff', do_diff(origCode, newCode, "diffChars"));
+    else if (char_window != undefined) char_window.close();
+    
+    if (svg_checkbox.checked || dot_checkbox.checked){
+		for (var i in smObjArr){
+            dotArray.push(Createdot.createDotString(smObjArr[i]));
+	    }
 	}
+    
+    if (svg_checkbox.checked) {
+		var svg = "";
+		for (var i in smObjArr){
+		  svg += '<h1>State Machine: ' + smObjArr[i].machineName + '</h1>\n<div id="svg_' + smObjArr[i].machineName + '">\n'
+		  svg += Viz(dotArray[i], "svg");
+		  svg += '\n</div>\n'		
+		}
+		svg_window = newOrUpdateWindow(svg_window, 'SVG', svg);
 
-  // Startup function: call UpdateGraphviz
-  jQuery(function() {
-	// The buttons are disabled, enable them now that this script
-	// has loaded.
-    generate_btn.removeAttr("disabled")
-                .text("Generate Graph!");
+	}
+    else if (svg_window != undefined) svg_window.close();
+    
+    if (dot_checkbox.checked) {
+		var dot = "";
+		for (var i in smObjArr){
+		  dot += '<h1>State Machine: ' + smObjArr[i].machineName + '</h1>\n<div id="dot_' + smObjArr[i].machineName + '">\n'
+		  dot += dotArray[i];
+		  dot += '\n</div>\n'		
+		}
+		dot_window = newOrUpdateWindow(dot_window, 'DOT', dot);
 
-  });
+	}
+    else if (dot_window != undefined) dot_window.close();    
+    
+    if (json_checkbox.checked) {
+		var jn = "";
+		for (var i in smObjArr){
+		  jn += '<h1>State Machine: ' + smObjArr[i].machineName + '</h1>\n<div id="json_' + smObjArr[i].machineName + '">\n'
+		  jn += JSON.stringify(smObjArr[i], null, 4);
+		  jn += '\n</div>\n'		
+		}
+		json_window = newOrUpdateWindow(json_window, 'JSON', jn);
 
-  // Bind actions to form buttons.
-  generate_btn.click(UpdateGraphviz);
+	}
+    else if (json_window != undefined) json_window.close();   
+    
+    
+    
+}
+      
+ 
+function updateButtonTextAndBindEvents(){
+    process_btn.innerHTML = "Process";
+    process_btn.onclick = processEditorContents;
+    accept_btn.innerHTML = "Accept";    
+    accept_btn.onclick = acceptAndUpdateEditorContents;
+    window.onbeforeunload = close_all_windows;
+}
 
 
-});
+document.onreadystatechange = function () { 
+    if (document.readyState === 'complete') {
+        updateButtonTextAndBindEvents();
+    }
+};
+
+
+
+function close_all_windows(){
+    if (line_window !== undefined) line_window.close(); 
+    if (word_window !== undefined) word_window.close(); 
+    if (char_window !== undefined) char_window.close(); 
+    if (svg_window  !== undefined) svg_window.close(); 
+    if (dot_window  !== undefined) dot_window.close(); 
+    if (json_window !== undefined) json_window.close(); 	
+}
+ 
+
+
+ 
