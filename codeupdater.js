@@ -38,7 +38,9 @@ var Codeupdater = (function () {
           enum_arraysize:         "{{machineName}}ARRAYSIZE",
           nullState:              "{{machineName}}NULL",
           fnArrayName:            "{{machineName}}FnArray",
-          transitionTableName:    " {{machineName}}TransitionTable"      
+          transitionTableName:    " {{machineName}}TransitionTable",
+          noblockReturn:          "rNBSELF",
+          nonBlockUsed:           "NONBLOCK_BEGIN"      
       };   
 
       /**
@@ -515,13 +517,23 @@ var Codeupdater = (function () {
                  for (var vr in smObj.validReturns){
                      if (vr == 0) continue;
                      if (vr >= smObj.validReturns.length-1) break;
-                     smObj.states[row[0]]["next"][smObj.validReturns[vr]] = row[vr];
+                     // check if valid return is rNBSELF which is special, used for continuations. 
+                     // if it is, check if the function contains the NOBLOCK,
+					 // if it does then fill it out to be the current state.  
+					 if (smObj.validReturns[vr] == smObj.tags.noblockReturn){
+					      if (smObj.states[row[0]]["fnDetails"]["fn"].indexOf(smObj.tags.nonBlockUsed) !== -1){
+                              smObj.states[row[0]]["next"][smObj.validReturns[vr]] = row[0];
+						  } else smObj.states[row[0]]["next"][smObj.validReturns[vr]] = smObj.tags.nullState;
+					  } else {
+                          smObj.states[row[0]]["next"][smObj.validReturns[vr]] = row[vr];
+					  }
                  }
              }   
           }
           
           // Add null next states for any state which is in the object but not in the 
           // exising transition table or the tranition table data was wrong dimension
+          // also if its the rNBSELF return its a special case for continuations (see comment a few lines up). 
           for (i in smObj.stateOrder){
               state = smObj.stateOrder[i];
               if (!(smObj.states[state].hasOwnProperty("next"))){
@@ -530,7 +542,13 @@ var Codeupdater = (function () {
                   for (var vr in smObj.validReturns){
                      if (vr == 0) continue;
                      if (vr >= smObj.validReturns.length-1) break;
-                     smObj.states[state]["next"][smObj.validReturns[vr]] = smObj.tags.nullState;
+					 if (smObj.validReturns[vr] == smObj.tags.noblockReturn){
+					      if (smObj.states[state]["fnDetails"]["fn"].indexOf(smObj.tags.nonBlockUsed) !== -1){
+                              smObj.states[state]["next"][smObj.validReturns[vr]] = state;
+						  } else smObj.states[state]["next"][smObj.validReturns[vr]] = smObj.tags.nullState;
+					  } else {
+                          smObj.states[state]["next"][smObj.validReturns[vr]] = smObj.tags.nullState;
+					  }
                   }
               }
           }
@@ -698,7 +716,7 @@ var Codeupdater = (function () {
       };
 
       /**
-      * Locate the function defintions witin newCode by extracting the substring between the approprate tags. 
+      * Locate the function defintions within newCode by extracting the substring between the approprate tags. 
       * For each function that has a matching function prototype, find any messages as delimited by the 
       * specially formatted //---- tag and store against the state in smObj.  
       * @private
@@ -1175,10 +1193,10 @@ var Codeupdater = (function () {
                       
               smObj = _analyseFunctionPrototypes(smObj);
               smObj = _updateReplaceEnum(smObj);
-              smObj = _updateReplaceFnArray(smObj);    
-              smObj = _buildNextStates(smObj);
+              smObj = _updateReplaceFnArray(smObj); 
+              smObj = _extractFnBodies(smObj);    
+              smObj = _buildNextStates(smObj);             
               smObj = _updateReplaceTransitionTable(smObj);
-              smObj = _extractFnBodies(smObj);
               smObj = _extractFnMessages(smObj);
               smObj = _updateReplaceFnBodies(smObj);
               
