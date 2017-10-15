@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+  xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  
+  <url>
+    <loc>https://dansdocs.github.io/information/project/my-awesome-project/</loc>
+    <lastmod>2014-11-18T02:13:50+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://dansdocs.github.io/information/page/about/</loc>
+  </url>
+  
+  <url>
+    <loc>https://dansdocs.github.io/information/tags/machine/</loc>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://dansdocs.github.io/information/page/</loc>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://dansdocs.github.io/information/project/</loc>
+    <lastmod>2014-11-18T02:13:50+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://dansdocs.github.io/information/tags/state/</loc>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://dansdocs.github.io/information/tags/statemachine/</loc>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://dansdocs.github.io/information/</loc>
+    <lastmod>2014-11-18T02:13:50+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://dansdocs.github.io/information/tags/</loc>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://dansdocs.github.io/information/page/tips/</loc>
+  </url>
+  
+</urlset>

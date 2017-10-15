@@ -56,11 +56,11 @@
         text-overflow: ellipsis;
     }
 
-    .flex-item {
+    a, .flex-item {
         background-color: #04516B;
         font-family: sans-serif;
         font-size: 1em;
-        width: 4em;
+        width: 7.4em;
         height: 1em;
         margin: 0 0 0 0;
         color: #6FBEF3;

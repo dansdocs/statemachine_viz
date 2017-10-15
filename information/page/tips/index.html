@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <title>Tips &middot; Daniel Burke</title>
+        <meta name="description" content="Rename a statemachine If you have a statemachine defined as:
+//----state_machine_list_start //{eg} //----state_machine_list_end  and you want to change the name of the statemachine - the following syntax will update the name.
+//----state_machine_list_start //{eg=new} //----state_machine_list_end  press process, and then accept and the name is updated. Recommended naming convention: statemachine names be kept short (max 3 characters) and in lowercase.
+More than one statemachine You can have as many statemachines as you would like.">
+        <meta name="HandheldFriendly" content="True">
+        <meta name="MobileOptimized" content="320">
+        <meta name="generator" content="Hugo 0.29" />
+        <meta name="robots" content="index,follow">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        <link rel="stylesheet" href="https://dansdocs.github.io/information/dist/styles.css">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,400,600,700,300&subset=latin,cyrillic-ext,latin-ext,cyrillic">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+        
+    </head>
+    <body>
+        
+
+        <div id="wrapper">
+            <header class="site-header">
+                <div class="container">
+                    <div class="site-title-wrapper">
+                        
+                            <h1 class="site-title">
+                                <a title="Statemachine Assistant - information" href="https://dansdocs.github.io/information/">Statemachine Assistant - information</a>
+                            </h1>
+                        
+
+                        
+                        
+                            <a class="button-square button-social hint--top" data-hint="Github" title="Github" href="https://dansdocs.github.io/">
+                                <i class="fa fa-github-alt"></i>
+                            </a>
+                        
+                        
+                        
+                        
+                        
+                    </div>
+
+                    <ul class="site-nav">
+                        
+    <li class="site-nav-item">
+        <a title="About" href="/information/page/about/">About</a>
+    </li>
+
+    <li class="site-nav-item">
+        <a title="Tips" href="/information/page/tips/">Tips</a>
+    </li>
+
+                    </ul>
+                </div>
+            </header>
+
+            <div id="container">
+
+
+<div class="container">
+    <article class="post-container">
+        <header class="post-header">
+    <h1 class="post-title">Tips</h1>
+    
+</header>
+
+        <div class="post-content clearfix">
+    
+
+    
+
+<h2 id="rename-a-statemachine">Rename a statemachine</h2>
+
+<p>If you have a statemachine defined as:</p>
+
+<pre><code>//----state_machine_list_start
+//{eg}
+//----state_machine_list_end
+</code></pre>
+
+<p>and you want to change the name of the statemachine - the following syntax will update the name.</p>
+
+<pre><code>//----state_machine_list_start
+//{eg=new}
+//----state_machine_list_end
+</code></pre>
+
+<p>press process, and then accept and the name is updated.
+Recommended naming convention: statemachine names be kept short (max 3 characters) and in lowercase.</p>
+
+<h2 id="more-than-one-statemachine">More than one statemachine</h2>
+
+<p>You can have as many statemachines as you would like. Comma separate the names and the code will be generated to support each statemachine.</p>
+
+<pre><code>//----state_machine_list_start
+//{eg, eg2, eg3}
+//----state_machine_list_end
+</code></pre>
+
+<h2 id="define-a-state">Define a state</h2>
+
+<p>A state is defined by a function prototype between the relevent tags.
+Each function prototype represents a state.
+Each function prototype MUST have the same return type and MUST take the same parameters so they can be called using the transition table and pointer.</p>
+
+<pre><code>//----eg_state_function_prototypes_start
+int egDEMOSTATE_exampleDescription (int previous_state);
+int egDS2_anotherDescription (int previous_state);
+//----eg_state_function_prototypes_end
+</code></pre>
+
+<p>The name of the function follows a naming convention which is used throughout processing and diagram:</p>
+
+<pre><code>aB_c
+a = statemachinename
+B = STATENAME (in caps)
+c = stateDescriptionTextInCamelCase
+</code></pre>
+
+<h2 id="rename-a-state">Rename a state</h2>
+
+<p>If you already have a functions defined for the states and you want to update the state name, this is done with the function prototypes using the following syntax.</p>
+
+<pre><code>//----eg_state_function_prototypes_start
+int egDEMOSTATE_exampleDescription (int previous_state); //----egDEMOSTATE_exampleDescription=egDS4_updatedDesctiption
+int egDS2_anotherDescription (int previous_state);
+//----eg_state_function_prototypes_end
+</code></pre>
+
+<p>Press process and accept and all instances will be updated. NOTE the state name and description can be changed this way, but the statemachine name must be changed using the rename statemachine approach above.</p>
+
+<pre><code>//----eg_state_function_prototypes_start
+int egDS4_updatedDesctiption (int previous_state);
+int egDS2_anotherDescription (int previous_state);
+//----eg_state_function_prototypes_end
+</code></pre>
+
+<h2 id="change-state-return-type-or-function-parameters">Change state return type or function parameters</h2>
+
+<p>As long as you change all the function prototypes for a statemachine in one go (and any code within the function bodies which might depend on it) then changing the return type and/or function parameters in the function prototypes will update all other instances by pressing process, accept.</p>
+
+<h2 id="add-or-remove-branches">Add (or remove) branches</h2>
+
+<p>Each column in the transition table is a return type defined by the following enum.</p>
+
+<pre><code>//----valid_state_return_values_start
+enum return_values {rvCURRENT, rFORWARD, rBRANCH, rBACK, rvARRAYSIZE};
+//----valid_state_return_values_end
+</code></pre>
+
+<p>The number of return types (three in this example) essentially represents the number of different paths a state can go to next.
+You can add another branch by adding an extra one in using the same pattern. Note the first entry of the enum isnt a return type, its just a placeholder signifying that the first entry of the table represents the current state. The last entry of the enum is not a valid return type either, it is there to size the arrays.</p>
+
+<pre><code>//----valid_state_return_values_start
+enum return_values {rvCURRENT, rFORWARD, rBRANCH, rBACK, rBRANCH2, rvARRAYSIZE};
+//----valid_state_return_values_end
+</code></pre>
+
+<p>Pressing process and accept will give you a new column in the transition table:</p>
+
+<pre><code>//----eg_state_transition_table_start
+int egTransitionTable[egARRAYSIZE][rvARRAYSIZE] = { 
+//   current  rFORWARD  rBRANCH  rBACK   rBRANCH2  
+    {egDS4,   egNULL,   egNULL,  egNULL, egNULL  },
+    {egDS2,   egNULL,   egNULL,  egNULL, egNULL  }
+};
+//----eg_state_transition_table_end
+</code></pre>
+
+<p>NOTE: adding or removing return types resets the entries to NULL so ensure you have a copy.</p>
+
+<h2 id="complete-transition-table">Complete transition table</h2>
+
+<p>The column with the heading current identifies the current state for that row but is otherwise ignored.
+For each other column, replace the NULL entries with the state name as defined in the function prototypes.</p>
+
+<p>If a particular state returns (for example) rFORWARD, then it MUST have a non null entry. If it doesn&rsquo;t return rFORWARD then it should have a null entry so that the diagram doesn&rsquo;t show lines that aren&rsquo;t followed.
+Every state defined in the function prototypes section is listed in the current column.</p>
+
+<pre><code>//----eg_state_transition_table_start
+int egTransitionTable[egARRAYSIZE][rvARRAYSIZE] = { 
+//   current  rFORWARD  rBRANCH  rBACK   rBRANCH2  
+    {egDS4,   egDS2,    egNULL,   egDS4, egNULL  },
+    {egDS2,   egDS4,    egNULL,   egDS2, egNULL  }
+};
+//----eg_state_transition_table_end
+</code></pre>
+
+<h2 id="describing-the-transition">Describing the transition</h2>
+
+<p>If the state transition table lists a non-null next state, a comment block will
+appear in the function body. Enter a short description within the square brackets and it will appear on the diagram.
+Using \n will give a new line on the drawing.</p>
+
+<pre><code>uint8_t egDS2_anotherDescription (int previous_state){
+    //----rFORWARD = egDS4 [Foward when /n timer expired]                
+}
+</code></pre>
+
+<h2 id="support-for-local-continuations">Support for local continuations</h2>
+
+<p>You can use local continuations and have a state return to itself transparently. This is useful for making things like sequential waits look like linear synchronous code, but having the program be able to go off and do something else and come back.
+You could just use states - but for things that are purely sequential this is a bit nicer.</p>
+
+<p>Add a return type - it MUST be called rNBSELF.
+This particular return type will be auto completed in the transition table if the NONBLOCK word appears in the corresponding function body.</p>
+
+<pre><code>//----valid_state_return_values_start
+enum return_values {rvCURRENT, rFORWARD, rBRANCH, rBACK, rNBSELF, rvARRAYSIZE};
+//----valid_state_return_values_end
+</code></pre>
+
+<p>The use of NONBLOCK follows the following pattern. Note that the NONBLOCK_TIDYUP must be right before the closing bracket.</p>
+
+<pre><code>int egDS1_exampleDescription (int previous_state){
+
+    //----rNBSELF = egDS1 []
+
+    NONBLOCK(){
+        NONBLOCK_WAIT_UNTIL(global_timer == 0);
+        // do stuff
+        NONBLOCK_TIDYUP();
+    }
+
+}
+</code></pre>
+
+<p>Since NONBLOCK appeared in the egDS1 state function body and there is a rNBSELF return type, the transition table will be auto completed with egDS1 under the rNBSELF column.</p>
+
+<pre><code>//----eg_state_transition_table_start
+int egTransitionTable[egARRAYSIZE][rvARRAYSIZE] = { 
+//   current  rFORWARD  rBRANCH  rBACK   rNBSELF  
+    {egDS1,   egNULL,   egNULL,  egNULL, egDS1  },
+    {egDS2,   egNULL,   egNULL,  egNULL, egNULL }
+};
+//----eg_state_transition_table_end
+</code></pre>
+
+<h2 id="restrictions-on-local-continuations">Restrictions on local continuations</h2>
+
+<ul>
+<li>Must not have any other returns within the NONBLOCK section</li>
+<li>can&rsquo;t use switch within the NONBLOCK section (already used!)</li>
+<li>can&rsquo;t have more than one NONBLOCK section within one function because at the end of the block it internally resets so the second NONBLOCK will execute once then the first NONBLOCK section will restart.</li>
+<li>NONBLOCK_WAIT_UNTIL and NONBLOCK_YIELD are only valid between NONBLOCK() and NONBLOCK_TIDYUP()</li>
+<li>NONBLOCK_TIDYUP() has to be followed ONLY by ;} (and optional whitespace) nothing else.</li>
+</ul>
+
+<p>Example:</p>
+
+<pre><code>NONBLOCK(){
+    NONBLOCK_WAIT_UNTIL(global_timer == 0);
+    // do stuff
+    NONBLOCK_TIDYUP();
+}
+</code></pre>
+
+</div>
+    </article>
+</div>
+
+            </div>
+        </div>
+
+        <footer class="footer">
+            <div class="container">
+                <div class="site-title-wrapper">
+                    <h1 class="site-title">
+                        <a title="Statemachine Assistant - information" href="https://dansdocs.github.io/information/">Statemachine Assistant - information</a>
+                    </h1>
+                    <a class="button-square button-jump-top js-jump-top" href="#">
+                        <i class="fa fa-angle-up"></i>
+                    </a>
+                </div>
+
+                <p class="footer-copyright">
+                    <span>&copy; Powered by <a href="https://gohugo.io/">Hugo</a></span>
+                </p>
+                <p class="footer-copyright">
+                    <span><a href="https://github.com/roryg/ghostwriter">Ghostwriter theme</a> By <a href="http://jollygoodthemes.com">JollyGoodThemes</a></span>
+                    <span>/ <a href="https://github.com/jbub/ghostwriter">Ported</a> to Hugo By <a href="https://github.com/jbub">jbub</a></span>
+                </p>
+            </div>
+        </footer>
+
+        <script src="https://dansdocs.github.io/information/js/jquery-1.11.3.min.js"></script>
+        <script src="https://dansdocs.github.io/information/js/jquery.fitvids.js"></script>
+        
+        
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+        
+        
+        <script src="https://dansdocs.github.io/information/js/scripts.js"></script>
+    </body>
+</html>
+

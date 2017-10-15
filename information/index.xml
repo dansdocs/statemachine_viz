@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Statemachine Assistant - information</title>
+    <link>https://dansdocs.github.io/information/</link>
+    <description>Recent content on Statemachine Assistant - information</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <copyright>Daniel Burke</copyright>
+    <lastBuildDate>Tue, 18 Nov 2014 02:13:50 +0000</lastBuildDate>
+    
+	<atom:link href="https://dansdocs.github.io/information/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>My awesome project</title>
+      <link>https://dansdocs.github.io/information/project/my-awesome-project/</link>
+      <pubDate>Tue, 18 Nov 2014 02:13:50 +0000</pubDate>
+      
+      <guid>https://dansdocs.github.io/information/project/my-awesome-project/</guid>
+      <description>About project Aenean ipsum justo, semper eu nisl ut, pretium tincidunt sem. Praesent et diam sit amet lacus lobortis dictum a id lacus. Quisque hendrerit sit amet turpis eu varius. Ut id lorem ac felis ultrices tincidunt. Pellentesque consequat arcu ac fringilla imperdiet. Phasellus pellentesque, sapien non pulvinar blandit, sapien ante aliquet felis, vel porttitor sapien ante in lacus. Fusce non urna aliquet, malesuada nibh vel, luctus urna. Phasellus ut lacus molestie, varius purus quis, malesuada lorem.</description>
+    </item>
+    
+    <item>
+      <title>About</title>
+      <link>https://dansdocs.github.io/information/page/about/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://dansdocs.github.io/information/page/about/</guid>
+      <description>About Statemachines are useful especially in cases where there are few resources such as in embedded applications. While useful, they are annoying to write. There are a bunch of tools and languages, why this one?
+I was looking for the following:
+ Didn&amp;rsquo;t want an extra language that needed to be converted. Wanted to be able to write it directly without the tool if you wanted. Wanted to be able to write it directly, and then use the tool and switch back and forth.</description>
+    </item>
+    
+    <item>
+      <title>Tips</title>
+      <link>https://dansdocs.github.io/information/page/tips/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://dansdocs.github.io/information/page/tips/</guid>
+      <description>Rename a statemachine If you have a statemachine defined as:
+//----state_machine_list_start //{eg} //----state_machine_list_end  and you want to change the name of the statemachine - the following syntax will update the name.
+//----state_machine_list_start //{eg=new} //----state_machine_list_end  press process, and then accept and the name is updated. Recommended naming convention: statemachine names be kept short (max 3 characters) and in lowercase.
+More than one statemachine You can have as many statemachines as you would like.</description>
+    </item>
+    
+  </channel>
+</rss>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>State on Statemachine Assistant - information</title>
+    <link>https://dansdocs.github.io/information/tags/state/</link>
+    <description>Recent content in State on Statemachine Assistant - information</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <copyright>Daniel Burke</copyright>
+    
+	<atom:link href="https://dansdocs.github.io/information/tags/state/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Tips</title>
+      <link>https://dansdocs.github.io/information/page/tips/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://dansdocs.github.io/information/page/tips/</guid>
+      <description>Rename a statemachine If you have a statemachine defined as:
+//----state_machine_list_start //{eg} //----state_machine_list_end  and you want to change the name of the statemachine - the following syntax will update the name.
+//----state_machine_list_start //{eg=new} //----state_machine_list_end  press process, and then accept and the name is updated. Recommended naming convention: statemachine names be kept short (max 3 characters) and in lowercase.
+More than one statemachine You can have as many statemachines as you would like.</description>
+    </item>
+    
+  </channel>
+</rss>
