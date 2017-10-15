@@ -40,7 +40,7 @@ var Codeupdater = (function () {
           fnArrayName:            "{{machineName}}FnArray",
           transitionTableName:    " {{machineName}}TransitionTable",
           noblockReturn:          "rNBSELF",
-          nonBlockUsed:           "NONBLOCK_BEGIN"      
+          nonBlockUsed:           "NONBLOCK"      
       };   
 
       /**
